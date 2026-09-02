@@ -47,7 +47,7 @@ def index():
 @app.route("/api/weather", methods=["POST"])
 def get_weather():
     """
-    Fetch weather data for a given city.
+    Fetch weather data for a given city including 5-day forecast.
     
     Request JSON: {"city": "New York"}
     Response JSON: {
@@ -55,7 +55,11 @@ def get_weather():
         "temperature": 72,
         "condition": "Clear sky",
         "icon": "☀️",
-        "timestamp": "2026-09-02T14:30:00"
+        "timestamp": "2026-09-02T14:30:00",
+        "forecast": [
+            {"date": "2026-09-03", "high": 75, "low": 65, "condition": "Sunny", "icon": "☀️"},
+            ...
+        ]
     }
     Error Response: {"error": "City not found"}
     """
@@ -95,7 +99,9 @@ def get_weather():
             "latitude": latitude,
             "longitude": longitude,
             "current": "temperature_2m,weather_code",
-            "temperature_unit": "celsius"
+            "daily": "weather_code,temperature_2m_max,temperature_2m_min",
+            "temperature_unit": "celsius",
+            "forecast_days": 5
         }
         
         weather_response = requests.get(weather_url, params=weather_params, timeout=5)
@@ -112,13 +118,33 @@ def get_weather():
         # Step 3: Map weather code to emoji and description
         emoji, condition = WEATHER_EMOJI_MAP.get(weather_code, ("❓", "Unknown"))
         
-        # Step 4: Return formatted response
+        # Step 4: Process 5-day forecast
+        forecast = []
+        daily = weather_data.get("daily", {})
+        times = daily.get("time", [])
+        weather_codes = daily.get("weather_code", [])
+        temps_max = daily.get("temperature_2m_max", [])
+        temps_min = daily.get("temperature_2m_min", [])
+        
+        for i in range(min(5, len(times))):
+            code = weather_codes[i]
+            emoji_f, condition_f = WEATHER_EMOJI_MAP.get(code, ("❓", "Unknown"))
+            forecast.append({
+                "date": times[i],
+                "high": round(temps_max[i], 1),
+                "low": round(temps_min[i], 1),
+                "condition": condition_f,
+                "icon": emoji_f
+            })
+        
+        # Step 5: Return formatted response
         return jsonify({
             "city": display_name,
             "temperature": round(temperature, 1),
             "condition": condition,
             "icon": emoji,
-            "timestamp": datetime.now().isoformat()
+            "timestamp": datetime.now().isoformat(),
+            "forecast": forecast
         }), 200
     
     except requests.exceptions.Timeout:

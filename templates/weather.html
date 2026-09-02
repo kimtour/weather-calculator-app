@@ -27,20 +27,52 @@
             box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
             padding: 40px 30px;
             width: 100%;
-            max-width: 500px;
+            max-width: 600px;
+        }
+
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 30px;
         }
 
         h1 {
             text-align: center;
             color: #333;
-            margin-bottom: 30px;
             font-size: 28px;
+            flex: 1;
+        }
+
+        .temp-toggle {
+            background: #f0f0f0;
+            border: 2px solid #ddd;
+            border-radius: 20px;
+            display: flex;
+            padding: 4px;
+            cursor: pointer;
+        }
+
+        .temp-toggle button {
+            padding: 8px 16px;
+            border: none;
+            background: transparent;
+            cursor: pointer;
+            font-weight: 600;
+            border-radius: 16px;
+            transition: all 0.3s;
+            color: #666;
+        }
+
+        .temp-toggle button.active {
+            background: #667eea;
+            color: white;
         }
 
         .search-box {
             display: flex;
             gap: 10px;
-            margin-bottom: 30px;
+            margin-bottom: 20px;
         }
 
         #cityInput {
@@ -81,6 +113,66 @@
         #searchBtn.loading {
             opacity: 0.6;
             cursor: not-allowed;
+        }
+
+        .favorites-section {
+            background: #f9f9f9;
+            border-radius: 10px;
+            padding: 15px;
+            margin-bottom: 20px;
+        }
+
+        .favorites-title {
+            font-size: 14px;
+            font-weight: 600;
+            color: #666;
+            margin-bottom: 10px;
+            text-transform: uppercase;
+        }
+
+        .favorites-list {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+        }
+
+        .favorite-btn {
+            background: white;
+            border: 2px solid #667eea;
+            color: #667eea;
+            padding: 8px 14px;
+            border-radius: 20px;
+            cursor: pointer;
+            font-size: 13px;
+            font-weight: 600;
+            transition: all 0.3s;
+        }
+
+        .favorite-btn:hover {
+            background: #667eea;
+            color: white;
+        }
+
+        .add-favorite-btn {
+            background: #667eea;
+            color: white;
+            border: none;
+            padding: 8px 14px;
+            border-radius: 20px;
+            cursor: pointer;
+            font-size: 13px;
+            font-weight: 600;
+            margin-top: 10px;
+            display: none;
+            transition: all 0.3s;
+        }
+
+        .add-favorite-btn:hover {
+            opacity: 0.9;
+        }
+
+        .add-favorite-btn.show {
+            display: inline-block;
         }
 
         .error-message {
@@ -191,6 +283,68 @@
             margin-top: 20px;
         }
 
+        .forecast-section {
+            margin-top: 30px;
+            padding-top: 30px;
+            border-top: 2px solid #f0f0f0;
+            display: none;
+        }
+
+        .forecast-section.show {
+            display: block;
+            animation: slideIn 0.3s ease;
+        }
+
+        .forecast-title {
+            font-size: 16px;
+            font-weight: 600;
+            color: #333;
+            margin-bottom: 20px;
+        }
+
+        .forecast-cards {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(100px, 1fr));
+            gap: 12px;
+        }
+
+        .forecast-card {
+            background: #f9f9f9;
+            border-radius: 12px;
+            padding: 16px;
+            text-align: center;
+            border: 1px solid #e0e0e0;
+            transition: transform 0.3s, box-shadow 0.3s;
+        }
+
+        .forecast-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        }
+
+        .forecast-date {
+            font-size: 12px;
+            color: #999;
+            margin-bottom: 8px;
+        }
+
+        .forecast-icon {
+            font-size: 32px;
+            margin: 8px 0;
+        }
+
+        .forecast-condition {
+            font-size: 12px;
+            color: #666;
+            margin-bottom: 8px;
+        }
+
+        .forecast-temps {
+            font-size: 13px;
+            color: #667eea;
+            font-weight: 600;
+        }
+
         @media (max-width: 600px) {
             .container {
                 padding: 30px 20px;
@@ -207,12 +361,22 @@
             .weather-icon {
                 font-size: 80px;
             }
+
+            .forecast-cards {
+                grid-template-columns: repeat(auto-fit, minmax(80px, 1fr));
+            }
         }
     </style>
 </head>
 <body>
     <div class="container">
-        <h1>🌤️ Weather App</h1>
+        <div class="header">
+            <h1>🌤️ Weather App</h1>
+            <div class="temp-toggle">
+                <button id="celsiusBtn" class="active">°C</button>
+                <button id="fahrenheitBtn">°F</button>
+            </div>
+        </div>
 
         <div class="search-box">
             <input 
@@ -222,6 +386,14 @@
                 autocomplete="off"
             >
             <button id="searchBtn">Search</button>
+        </div>
+
+        <div class="favorites-section">
+            <div class="favorites-title">⭐ Favorites</div>
+            <div class="favorites-list" id="favoritesList">
+                <div style="color: #999; font-size: 13px;">No favorites yet</div>
+            </div>
+            <button class="add-favorite-btn" id="addFavoriteBtn">+ Add to Favorites</button>
         </div>
 
         <div class="error-message" id="errorMessage"></div>
@@ -238,29 +410,157 @@
             <div class="timestamp" id="timestamp"></div>
         </div>
 
+        <div class="forecast-section" id="forecastSection">
+            <div class="forecast-title">5-Day Forecast</div>
+            <div class="forecast-cards" id="forecastCards"></div>
+        </div>
+
         <div class="info-text" id="infoText">
             Enter a city name to see the current weather
         </div>
     </div>
 
     <script>
+        // DOM Elements
         const cityInput = document.getElementById('cityInput');
         const searchBtn = document.getElementById('searchBtn');
         const errorMessage = document.getElementById('errorMessage');
         const loadingSpinner = document.getElementById('loadingSpinner');
         const weatherDisplay = document.getElementById('weatherDisplay');
+        const forecastSection = document.getElementById('forecastSection');
         const infoText = document.getElementById('infoText');
         const cityName = document.getElementById('cityName');
         const weatherIcon = document.getElementById('weatherIcon');
         const temperature = document.getElementById('temperature');
         const condition = document.getElementById('condition');
         const timestamp = document.getElementById('timestamp');
+        const celsiusBtn = document.getElementById('celsiusBtn');
+        const fahrenheitBtn = document.getElementById('fahrenheitBtn');
+        const favoritesList = document.getElementById('favoritesList');
+        const addFavoriteBtn = document.getElementById('addFavoriteBtn');
+        const forecastCards = document.getElementById('forecastCards');
+
+        // State
+        let currentUnit = 'C';
+        let currentWeatherData = null;
+        let currentCity = null;
+
+        // Load preferences from localStorage
+        function loadPreferences() {
+            const savedUnit = localStorage.getItem('temperatureUnit');
+            if (savedUnit) {
+                currentUnit = savedUnit;
+                updateUnitToggle();
+            }
+            loadFavorites();
+        }
+
+        // Temperature unit toggle
+        celsiusBtn.addEventListener('click', () => {
+            currentUnit = 'C';
+            localStorage.setItem('temperatureUnit', 'C');
+            updateUnitToggle();
+            if (currentWeatherData) {
+                displayWeather(currentWeatherData);
+            }
+        });
+
+        fahrenheitBtn.addEventListener('click', () => {
+            currentUnit = 'F';
+            localStorage.setItem('temperatureUnit', 'F');
+            updateUnitToggle();
+            if (currentWeatherData) {
+                displayWeather(currentWeatherData);
+            }
+        });
+
+        function updateUnitToggle() {
+            celsiusBtn.classList.toggle('active', currentUnit === 'C');
+            fahrenheitBtn.classList.toggle('active', currentUnit === 'F');
+        }
+
+        function celsiusToFahrenheit(celsius) {
+            return (celsius * 9/5) + 32;
+        }
+
+        function formatTemp(celsius) {
+            if (currentUnit === 'C') {
+                return celsius.toFixed(1) + '°C';
+            } else {
+                return celsiusToFahrenheit(celsius).toFixed(1) + '°F';
+            }
+        }
+
+        // Favorites management
+        function saveFavorites(favorites) {
+            localStorage.setItem('favoritesCities', JSON.stringify(favorites));
+        }
+
+        function getFavorites() {
+            const favorites = localStorage.getItem('favoritesCities');
+            return favorites ? JSON.parse(favorites) : [];
+        }
+
+        function loadFavorites() {
+            const favorites = getFavorites();
+            if (favorites.length === 0) {
+                favoritesList.innerHTML = '<div style="color: #999; font-size: 13px;">No favorites yet</div>';
+            } else {
+                favoritesList.innerHTML = '';
+                favorites.forEach(city => {
+                    const btn = document.createElement('button');
+                    btn.className = 'favorite-btn';
+                    btn.textContent = city;
+                    btn.addEventListener('click', () => {
+                        cityInput.value = city;
+                        searchWeather();
+                    });
+                    
+                    // Add remove functionality on right-click
+                    btn.addEventListener('contextmenu', (e) => {
+                        e.preventDefault();
+                        removeFavorite(city);
+                    });
+                    
+                    favoritesList.appendChild(btn);
+                });
+            }
+        }
+
+        function addFavorite(city) {
+            const favorites = getFavorites();
+            if (!favorites.includes(city)) {
+                favorites.push(city);
+                saveFavorites(favorites);
+                loadFavorites();
+            }
+        }
+
+        function removeFavorite(city) {
+            const favorites = getFavorites();
+            const index = favorites.indexOf(city);
+            if (index > -1) {
+                favorites.splice(index, 1);
+                saveFavorites(favorites);
+                loadFavorites();
+            }
+        }
+
+        addFavoriteBtn.addEventListener('click', () => {
+            if (currentCity) {
+                addFavorite(currentCity);
+            }
+        });
 
         // Hide error and weather display on input
         cityInput.addEventListener('input', () => {
             errorMessage.classList.remove('show');
             weatherDisplay.classList.remove('show');
+            forecastSection.classList.remove('show');
             infoText.style.display = 'block';
+            
+            // Show add to favorites button only if input has value
+            addFavoriteBtn.classList.toggle('show', cityInput.value.trim().length > 0);
         });
 
         // Allow Enter key to submit
@@ -284,6 +584,7 @@
             // Hide previous results
             errorMessage.classList.remove('show');
             weatherDisplay.classList.remove('show');
+            forecastSection.classList.remove('show');
             infoText.style.display = 'none';
 
             // Show loading spinner
@@ -320,9 +621,12 @@
         }
 
         function displayWeather(data) {
+            currentWeatherData = data;
+            currentCity = data.city.split(',')[0]; // Get just the city name without country
+
             cityName.textContent = data.city;
             weatherIcon.textContent = data.icon;
-            temperature.textContent = data.temperature + '°C';
+            temperature.textContent = formatTemp(data.temperature);
             condition.textContent = data.condition;
 
             const date = new Date(data.timestamp);
@@ -335,8 +639,41 @@
             });
             timestamp.textContent = `Updated: ${timeString}`;
 
+            // Display forecast
+            if (data.forecast && data.forecast.length > 0) {
+                displayForecast(data.forecast);
+            }
+
             weatherDisplay.classList.add('show');
             infoText.style.display = 'none';
+
+            // Check if already in favorites
+            const favorites = getFavorites();
+            addFavoriteBtn.classList.toggle('show', !favorites.includes(currentCity));
+        }
+
+        function displayForecast(forecastData) {
+            forecastCards.innerHTML = '';
+            forecastData.forEach(day => {
+                const card = document.createElement('div');
+                card.className = 'forecast-card';
+                
+                const date = new Date(day.date);
+                const dateStr = date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+                
+                card.innerHTML = `
+                    <div class="forecast-date">${dateStr}</div>
+                    <div class="forecast-icon">${day.icon}</div>
+                    <div class="forecast-condition">${day.condition}</div>
+                    <div class="forecast-temps">
+                        <div>${formatTemp(day.high)}</div>
+                        <div style="font-weight: 400; color: #999;">${formatTemp(day.low)}</div>
+                    </div>
+                `;
+                
+                forecastCards.appendChild(card);
+            });
+            forecastSection.classList.add('show');
         }
 
         function showError(message) {
@@ -346,6 +683,7 @@
 
         // Focus input on page load
         window.addEventListener('load', () => {
+            loadPreferences();
             cityInput.focus();
         });
     </script>
