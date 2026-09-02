@@ -1,0 +1,250 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Modern Calculator</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        }
+
+        .calculator {
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            padding: 20px;
+            width: 100%;
+            max-width: 400px;
+        }
+
+        .display {
+            background: #f5f5f5;
+            border-radius: 10px;
+            padding: 20px;
+            margin-bottom: 20px;
+            text-align: right;
+        }
+
+        #expression {
+            font-size: 14px;
+            color: #999;
+            min-height: 20px;
+            margin-bottom: 8px;
+        }
+
+        #result {
+            font-size: 32px;
+            font-weight: 600;
+            color: #333;
+            min-height: 40px;
+            word-wrap: break-word;
+            word-break: break-all;
+        }
+
+        .buttons {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 10px;
+        }
+
+        button {
+            padding: 15px;
+            font-size: 18px;
+            border: none;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: all 0.2s;
+            font-weight: 600;
+        }
+
+        button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+        }
+
+        button:active {
+            transform: translateY(0);
+        }
+
+        .number {
+            background: #f0f0f0;
+            color: #333;
+        }
+
+        .number:hover {
+            background: #e0e0e0;
+        }
+
+        .operator {
+            background: #667eea;
+            color: white;
+        }
+
+        .operator:hover {
+            background: #5568d3;
+        }
+
+        .equals {
+            background: #48bb78;
+            color: white;
+            grid-column: span 2;
+        }
+
+        .equals:hover {
+            background: #38a169;
+        }
+
+        .clear {
+            background: #f56565;
+            color: white;
+            grid-column: span 2;
+        }
+
+        .clear:hover {
+            background: #e53e3e;
+        }
+
+        .delete {
+            background: #ed8936;
+            color: white;
+        }
+
+        .delete:hover {
+            background: #dd6b20;
+        }
+
+        .error {
+            color: #f56565;
+        }
+    </style>
+</head>
+<body>
+    <div class="calculator">
+        <div class="display">
+            <div id="expression"></div>
+            <div id="result">0</div>
+        </div>
+        <div class="buttons">
+            <button class="clear" onclick="clearDisplay()">AC</button>
+            <button class="delete" onclick="deleteLastChar()">DEL</button>
+            <button class="operator" onclick="appendOperator('/')">/</button>
+            <button class="operator" onclick="appendOperator('*')">×</button>
+            
+            <button class="number" onclick="appendNumber('7')">7</button>
+            <button class="number" onclick="appendNumber('8')">8</button>
+            <button class="number" onclick="appendNumber('9')">9</button>
+            <button class="operator" onclick="appendOperator('-')">−</button>
+            
+            <button class="number" onclick="appendNumber('4')">4</button>
+            <button class="number" onclick="appendNumber('5')">5</button>
+            <button class="number" onclick="appendNumber('6')">6</button>
+            <button class="operator" onclick="appendOperator('+')">+</button>
+            
+            <button class="number" onclick="appendNumber('1')">1</button>
+            <button class="number" onclick="appendNumber('2')">2</button>
+            <button class="number" onclick="appendNumber('3')">3</button>
+            <button class="operator" onclick="appendOperator('%')">%</button>
+            
+            <button class="number" onclick="appendNumber('0')" style="grid-column: span 2;">0</button>
+            <button class="number" onclick="appendNumber('.')">.</button>
+            <button class="equals" onclick="calculate()">=</button>
+        </div>
+    </div>
+
+    <script>
+        let currentExpression = '';
+
+        function updateDisplay() {
+            document.getElementById('expression').textContent = currentExpression;
+        }
+
+        function appendNumber(num) {
+            currentExpression += num;
+            updateDisplay();
+        }
+
+        function appendOperator(op) {
+            if (currentExpression && !currentExpression.endsWith(' ')) {
+                // Convert display operators to actual operators
+                const operatorMap = { '×': '*', '−': '-' };
+                const actualOp = operatorMap[op] || op;
+                currentExpression += actualOp;
+                updateDisplay();
+            }
+        }
+
+        function deleteLastChar() {
+            currentExpression = currentExpression.slice(0, -1);
+            updateDisplay();
+        }
+
+        function clearDisplay() {
+            currentExpression = '';
+            document.getElementById('expression').textContent = '';
+            document.getElementById('result').textContent = '0';
+            document.getElementById('result').classList.remove('error');
+        }
+
+        async function calculate() {
+            if (!currentExpression) return;
+
+            try {
+                const response = await fetch('/api/calc', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ expression: currentExpression })
+                });
+
+                const data = await response.json();
+                const resultElement = document.getElementById('result');
+
+                if (data.error) {
+                    resultElement.textContent = data.result;
+                    resultElement.classList.add('error');
+                } else {
+                    resultElement.textContent = data.result;
+                    resultElement.classList.remove('error');
+                    currentExpression = data.result.toString();
+                }
+            } catch (error) {
+                document.getElementById('result').textContent = 'Error';
+                document.getElementById('result').classList.add('error');
+                console.error('Error:', error);
+            }
+        }
+
+        // Keyboard support
+        document.addEventListener('keydown', (e) => {
+            if (e.key >= '0' && e.key <= '9') {
+                appendNumber(e.key);
+            } else if (e.key === '+' || e.key === '-' || e.key === '*' || e.key === '/') {
+                appendOperator(e.key);
+            } else if (e.key === '.') {
+                appendNumber('.');
+            } else if (e.key === 'Enter') {
+                e.preventDefault();
+                calculate();
+            } else if (e.key === 'Backspace') {
+                e.preventDefault();
+                deleteLastChar();
+            } else if (e.key === 'Escape') {
+                clearDisplay();
+            }
+        });
+    </script>
+</body>
+</html>
