@@ -1,13 +1,37 @@
 # Weather & Calculator Web Apps
 
-A simple web application bundle containing a weather app and a calculator, built with Flask and FastAPI.
+## Project overview
+
+Two small Python web applications share this repository: a Flask weather lookup and a FastAPI arithmetic calculator. Each has its own browser interface and can run independently.
+
+### Purpose and users
+
+The practical purpose is to demonstrate interactive web forms, external API calls, JSON responses and input/error handling with two Python frameworks. Intended users are people checking a city's weather or evaluating arithmetic, plus developers learning these patterns. No specific commercial customer or deployment is established.
+
+### Inputs and outputs
+
+The weather app accepts a city name, uses Open-Meteo geocoding to select a location, and requests its weather forecast. It returns a display name, Celsius temperature, condition/emoji, timestamp and a five-day high/low forecast for the browser. The calculator accepts an arithmetic expression and returns its result or an error. Neither application defines a database for storing user histories.
+
+### Logic and workflow
+
+Weather: enter city → find coordinates → request weather data → map weather codes to descriptions → display current conditions and forecast. The first geocoding result is used, so ambiguous city names may resolve unexpectedly. Calculator: enter expression → check the allowed characters → evaluate the expression → display the result or report an invalid expression/division by zero. The two flows do not depend on one another.
+
+### Integrations
+
+The weather app calls Open-Meteo's geocoding and forecast APIs through Requests. Flask serves its weather page, while FastAPI/Uvicorn serves the calculator and static assets. There is no external calculator service, payment integration or scheduled fetch job.
+
+### Running, maintenance and boundaries
+
+Start `weather.py` and/or `calculator.py` manually using the instructions below. Requests occur when users submit forms. No cloud-hosting configuration or automated test/CI pipeline is included. Local execution requires Python dependencies and internet access for weather lookup; hosting and external API usage costs/conditions depend on the chosen environment and provider. Maintain dependencies, provider response compatibility and input limits before exposing the applications publicly.
+
+These are learning utilities, not a weather-alert service or a hardened public expression engine. The implementation does not currently request humidity or wind values despite broader UI/feature descriptions. Production authentication, resource limits, monitoring and persistent history are outside the implemented scope.
 
 ## Features
 
 ### Weather App
 - Real-time weather data fetching using Open-Meteo API
 - Displays current weather conditions with weather emojis
-- Shows temperature, humidity, wind speed, and weather description
+- Shows temperature, weather description and a five-day forecast
 - Responsive web interface
 
 ### Calculator App
@@ -20,7 +44,7 @@ A simple web application bundle containing a weather app and a calculator, built
 
 1. Clone the repository:
 ```bash
-git clone https://github.com/yourusername/weather-calculator-app.git
+git clone https://github.com/kimtour/weather-calculator-app.git
 cd weather-calculator-app
 ```
 
